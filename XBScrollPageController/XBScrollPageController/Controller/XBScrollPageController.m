@@ -34,28 +34,49 @@
 @property (nonatomic,strong) NSTimer *graceTimer;
 @property (nonatomic,strong) UIView *selectionIndicator;  /**< 选择指示器  */
 
+@property (nonatomic, assign)CGFloat topMargin;
+@property (nonatomic, strong)UIImageView *gradientIV;
+@property (nonatomic, strong)UIView *tagCVBgView;
 
-
-
+@property (nonatomic, strong)UIImageView *blurIV;
 @end
 
 @implementation XBScrollPageController
 
 #pragma - mark LifeCycle
-- (instancetype)initWithTagViewHeight:(CGFloat)tagViewHeight
+- (instancetype)initWithTagViewHeight:(CGFloat)tagViewHeight andTopMargin:(CGFloat)topMargin
 {
     if (self = [super init]) {
         self.tagViewHeight = tagViewHeight;
+        self.topMargin = topMargin;
         //设置默认值
         [self setupDefaultProperties];
+        
+        // 标签栏，颜色背景条。要先add
+        
+        self.tagCVBgView = [UIView new];
+        [self.view addSubview:self.tagCVBgView];
+        
         //初始化两个CollectionView
         [self setupCollectionView];
+        
+    // 渐变图片，在标签条的最右侧
+        
+        self.gradientIV  = [UIImageView new];
+        [self.view addSubview:self.gradientIV];
+        
+        // 阴影分割图片
+//        self.blurIV = [UIImageView new];
+//        [self.view addSubview:self.blurIV];
+        
+
     }
     return self;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    // http://www.jianshu.com/p/9884f13074b8
     self.edgesForExtendedLayout = UIRectEdgeNone;
     
     
@@ -67,8 +88,31 @@
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    self.tagCollectionView.frame = CGRectMake(0, 0, XBScreenWidth, self.tagViewHeight);
-    self.pageCollectionView.frame = CGRectMake(0, self.tagViewHeight, XBScreenWidth, self.view.frame.size.height - self.tagViewHeight);
+    
+    // 布局添加了topMargin的修改
+    
+    // 标签CV
+    self.tagCollectionView.frame = CGRectMake(8 * LZYFitX, self.topMargin, XBScreenWidth - 20 * LZYFitX, self.tagViewHeight);
+    
+    //标签栏，颜色背景条
+    self.tagCVBgView.frame = CGRectMake(0, self.topMargin, XBScreenWidth, self.tagViewHeight);
+    self.tagCVBgView.backgroundColor = [UIColor whiteColor];
+    
+    // 阴影分割图片
+//    self.blurIV.frame = CGRectMake(0, self.topMargin + self.tagViewHeight, XBScreenWidth, 2);
+////    self.blurIV.image = [UIImage imageNamed:@"tagBlur"];
+//    self.blurIV.backgroundColor = [UIColor redColor];
+    
+    // 分页CV
+    self.pageCollectionView.frame = CGRectMake(0, self.topMargin + self.tagViewHeight, XBScreenWidth, self.view.frame.size.height + 49);
+// 568下455.为568-64-49.优惠模块之类push因为高度不对有问题
+    
+    
+    // 渐变图片的frame
+    self.gradientIV.frame = CGRectMake(355 * LZYFitX, self.tagViewHeight * 0.25 , 20 * LZYFitX, self.tagViewHeight * 0.5);
+    self.gradientIV.image = [UIImage imageNamed:@"pageGradient"];
+    
+    
 }
 
 - (void)dealloc
@@ -79,6 +123,14 @@
     }
 }
 
+- (CGFloat)tagItemGap{
+    // 默认标签间距是24，需要赋值为24*2
+    if (_tagItemGap == 0) {
+        _tagItemGap = 48.0f;
+    }
+    
+    return _tagItemGap;
+}
 #pragma - mark setupMethod
 - (void)setupDefaultProperties
 {
@@ -88,7 +140,6 @@
     self.selectedTitleColor = [UIColor redColor];
     self.selectedIndicatorColor = [UIColor redColor];
     self.tagItemSize = CGSizeZero;
-//    self.tagItemGap = 10.f;
     self.selectedIndex = -1;
 }
 
@@ -146,6 +197,7 @@
     NSInteger index = indexPath.item;
     if ([self isTagView:collectionView]) {     //标签
         XBTagTitleCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kTagCollectionViewCellIdentifier forIndexPath:indexPath];
+        // 从标签数组数据源取值
         XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[index];
         cell.tagTitleModel = tagTitleModel;
         [cell setSelected:(self.selectedIndex == index)?YES:NO];
@@ -185,17 +237,17 @@
     NSInteger index = indexPath.item;
     XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[index];
     if ([self isTagView:collectionView]) {     //标签
-        if (CGSizeEqualToSize(CGSizeZero, self.tagItemSize)) {      //如果用户没有手动设置tagItemSize
+        if (CGSizeEqualToSize(CGSizeZero, self.tagItemSize)) {      //如果用户没有手动设置，tagItemSize为零，根据title计算并自适应。
             NSString *title = tagTitleModel.tagTitle;
             CGSize titleSize = [self sizeForTitle:title withFont:((tagTitleModel.normalTitleFont.pointSize >= tagTitleModel.selectedTitleFont.pointSize)?tagTitleModel.normalTitleFont:tagTitleModel.selectedTitleFont)];
-            return CGSizeMake(titleSize.width, self.tagViewHeight);  //+ self.tagItemGap * 0.5
+            return CGSizeMake(titleSize.width + self.tagItemGap * 0.5, self.tagViewHeight);  //+ self.tagItemGap * 0.5
         }else
         {
             return self.tagItemSize;
         }
         
     }else
-    {
+    {// page页面
         return collectionView.frame.size;
     }
 }
@@ -204,17 +256,20 @@
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    if ([self isTagView:collectionView]) {                     //选中某个标签
+    if ([self isTagView:collectionView]) {                     //标签cv
+        // 取消之前的选中
         [collectionView deselectItemAtIndexPath:[NSIndexPath indexPathForItem:self.selectedIndex inSection:0] animated:YES];
         
         NSInteger gap = indexPath.item - self.selectedIndex;
-        
+        // 赋值现在选中的索引
         self.selectedIndex = indexPath.item;
-
-        UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+// 之前作者的写法，会导致“自适应tagSize时，连续滑动page，滑动结束后选中tag在屏幕外，更新界面时指示器无法正确指示等，标签选中状态不对等”，改为从缓存池取，解决。
+//        UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+        
+        UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kTagCollectionViewCellIdentifier forIndexPath:indexPath];
         if (!cell) {
             if ([self isZeroSize:self.tagItemSize]) {
-                XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[0];
+                XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[self.selectedIndex];
                 CGSize tagSize = [self sizeForTitle:tagTitleModel.tagTitle withFont:((tagTitleModel.normalTitleFont.pointSize >= tagTitleModel.selectedTitleFont.pointSize)?tagTitleModel.normalTitleFont:tagTitleModel.selectedTitleFont)];
                 self.selectionIndicator.width = tagSize.width;
             }else
@@ -225,25 +280,28 @@
         }
         else if(self.selectionIndicator.centerX != cell.centerX) {
             
-            // [UIView animateKeyframesWithDuration:0.2 delay:0 options:UIViewKeyframeAnimationOptionLayoutSubviews animations:^{
-            //     [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.5 animations:^{
-            //         self.selectionIndicator.x = cell.x;
-            //     }];
+             [UIView animateKeyframesWithDuration:0.1 delay:0 options:UIViewKeyframeAnimationOptionLayoutSubviews animations:^{
+                 [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.1 animations:^{
+                     // 解决指示器选中后动画显得抖动的问题。
+                     self.selectionIndicator.x = cell.x;
+                     self.selectionIndicator.width = cell.width;
+
+                 }];
                 
-            //     [UIView addKeyframeWithRelativeStartTime:0.5 relativeDuration:0.5 animations:^{
-            //         self.selectionIndicator.width = cell.width;
-            //     }];
+//                 [UIView addKeyframeWithRelativeStartTime:0.1 relativeDuration:0.1 animations:^{
+//                 }];
+//                
+             } completion:^(BOOL finished) {
                 
-            // } completion:^(BOOL finished) {
-                
-            // }];
+             }];
             
         }
         
         [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
         
         [self.pageCollectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionRight animated:labs(gap)>1?self.gapAnimated:YES];
-
+        
+        [self.pageCollectionView reloadData];
         
     }
 }
@@ -271,11 +329,13 @@
 
 
 #pragma - mark UIScrollerViewDelegate
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+- (void)scrollViewDidEndDecelerating:(UICollectionView *)scrollView
 {
     if (scrollView == self.pageCollectionView) {
+        [scrollView reloadData];
         int index = scrollView.contentOffset.x / self.pageCollectionView.frame.size.width;
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:0];
+        // tagSize为zero时，因为自定义tag的宽度，需要在此 更新指示器等等选中状态
         [self collectionView:self.tagCollectionView didSelectItemAtIndexPath:indexPath];
     }
 }
@@ -283,6 +343,8 @@
 {
     if (scrollView == self.pageCollectionView) {
         if (![self isZeroSize:self.tagItemSize]) {
+            
+            // tagSize用户设置了，且不为zero时，在此改变指示器。
             self.selectionIndicator.x = scrollView.contentOffset.x/XBScreenWidth * self.tagItemSize.width;
         }
         
@@ -299,15 +361,19 @@
     [self resetSelectedIndex];
 
 }
-- (void)reloadDataWith:(NSArray *)titleArray andSubViewdisplayClasses:(NSArray *)classes withParams:(NSArray *)params
+- (void)reloadDataWith:(NSArray *)titleArray andSubViewdisplayClasses:(NSArray *)classes withParams:(NSArray *)params resetSelectedIndex:(BOOL)resetSelectedIndex
 {
     [self convertKeyValue2Model:titleArray];
     self.displayClasses = classes;
     [self.tagCollectionView reloadData];
     [self.pageCollectionView reloadData];
     self.params = params;
-    
     [self resetSelectedIndex];
+
+//    if (resetSelectedIndex) {
+//            [self resetSelectedIndex];
+//    }
+    
 }
 
 - (void)selectTagByIndex:(NSInteger)index animated:(BOOL)animated
@@ -469,11 +535,11 @@
         }
         //2.使用自由文本宽度,默认设为第一个自由文本的size
         else{
-            XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[0];
+            XBTagTitleModel *tagTitleModel = self.tagTitleModelArray[self.selectedIndex];
             CGSize tagSize = [self sizeForTitle:tagTitleModel.tagTitle withFont:((tagTitleModel.normalTitleFont.pointSize >= tagTitleModel.selectedTitleFont.pointSize)?tagTitleModel.normalTitleFont:tagTitleModel.selectedTitleFont)];
             
             if ([self isZeroSize:self.selectedIndicatorSize]) { //如果未手动设定指示条宽高,则设置默认值
-                self.selectedIndicatorSize = CGSizeMake(tagSize.width, 8);
+                self.selectedIndicatorSize = CGSizeMake(tagSize.width, 2);
             }
             
             _selectionIndicator.frame = CGRectMake(0, self.tagViewHeight - self.selectedIndicatorSize.height, tagSize.width, self.selectedIndicatorSize.height);

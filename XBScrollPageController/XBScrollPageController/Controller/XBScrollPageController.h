@@ -8,7 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
+
 @interface XBScrollPageController : UIViewController
+
+
 @property (nonatomic,strong) UIFont *normalTitleFont; /**< 正常(非选中)标签字体  default is 14*/
 @property (nonatomic,strong) UIFont *selectedTitleFont; /**< 选中状态标签字体  default is 16*/
 
@@ -34,11 +37,27 @@
 
 @property (nonatomic,assign) BOOL gapAnimated; /**< 跨越多个标签进行切换时,page是否动画,默认为NO,建议不开启,开启后中间过渡的控制器都会加载  */
 
+
 /**
- *  必须调用
+ tag item 间距*2。及你想他们之间的间距是12，需要赋值为6
+ */
+@property (nonatomic, assign)CGFloat tagItemGap;/**< 根据文本计算tag宽度时,每个tag之间的间距,default is 10.f*/
+
+
+/**
+ *
  *
  */
-- (instancetype)initWithTagViewHeight:(CGFloat)tagViewHeight;
+
+
+/**
+ 必须调用，初始化方法
+
+ @param tagViewHeight 标签栏高度
+ @param topMargin 整个scrollPage离上面视图的高度，有时候scrollPage不一定是在页面的顶部。
+ 
+ */
+- (instancetype)initWithTagViewHeight:(CGFloat)tagViewHeight andTopMargin:(CGFloat)topMargin;
 /**
  *  刷新界面数据
  *
@@ -49,7 +68,17 @@
 /**
  *  可以传递参数的刷新方法
  */
-- (void)reloadDataWith:(NSArray *)titleArray andSubViewdisplayClasses:(NSArray *)classes withParams:(NSArray *)params;
+
+
+/**
+ 刷新数据
+
+ @param titleArray 标签数组
+ @param classes 子页面类名数组
+ @param params 给页面传递的参数
+ @param resetSelectedIndex 是否重置选中状态 e.g. 这个参数目前内部没有调用
+ */
+- (void)reloadDataWith:(NSArray *)titleArray andSubViewdisplayClasses:(NSArray *)classes withParams:(NSArray *)params resetSelectedIndex:(BOOL)resetSelectedIndex;
 
 /**
  *  选中index位置的标签[0...titleArray.count-1]
@@ -59,6 +88,5 @@
 
 
 
-//移除属性
-//@property (nonatomic,assign) CGFloat  tagItemGap; /**< 根据文本计算tag宽度时,每个tag之间的间距,default is 10.f*/
+
 @end

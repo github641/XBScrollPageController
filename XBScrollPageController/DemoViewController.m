@@ -18,7 +18,7 @@
 //重载init方法
 - (instancetype)init
 {
-    if (self = [super initWithTagViewHeight:49])
+    if (self = [super initWithTagViewHeight:49 andTopMargin:0])
     {
         
     }
@@ -33,7 +33,7 @@
     self.title = @"ScrollPageDemo";
     
     
-    //设置自定义属性
+    //设置自定义属性，默认自适应
     self.tagItemSize = CGSizeMake(110, 49);
     
 //    self.selectedIndicatorSize = CGSizeMake(30, 8);
@@ -73,7 +73,7 @@
                         ];
     
     
-    [self reloadDataWith:titleArray andSubViewdisplayClasses:classNames withParams:params];
+    [self reloadDataWith:titleArray andSubViewdisplayClasses:classNames withParams:params resetSelectedIndex:NO];
     
     
 }

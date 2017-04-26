@@ -29,3 +29,11 @@ extern NSString *const kPageCollectionViewCellIdentifier;
 extern NSString *const kCachedTime;
 extern NSString *const kCachedVCName;
 extern CGFloat const kSelectionIndicatorHeight;
+
+
+#define referenceW 375.0
+#define referenceH 667.0
+#define LZYFitX (XBScreenWidth / referenceW)
+#define LZYFitY (XBScreenHeight / referenceH)
+
+
