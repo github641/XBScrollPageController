@@ -341,14 +341,14 @@
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if (scrollView == self.pageCollectionView) {
-        if (![self isZeroSize:self.tagItemSize]) {
-            
-            // tagSize用户设置了，且不为zero时，在此改变指示器。
-            self.selectionIndicator.x = scrollView.contentOffset.x/XBScreenWidth * self.tagItemSize.width;
-        }
-        
-    }
+//    if (scrollView == self.pageCollectionView) {
+//        if (![self isZeroSize:self.tagItemSize]) {
+//            
+//            // tagSize用户设置了，且不为zero时，在此改变指示器。
+//            self.selectionIndicator.x = scrollView.contentOffset.x/XBScreenWidth * self.tagItemSize.width;
+//        }
+//        
+//    }
 }
 #pragma - mark publicMethod
 - (void)reloadDataWith:(NSArray *)titleArray andSubViewdisplayClasses:(NSArray *)classes
