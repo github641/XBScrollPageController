@@ -342,7 +342,7 @@
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
 //    if (scrollView == self.pageCollectionView) {
-//        if (![self isZeroSize:self.tagItemSize]) {
+    //        if (![self isZeroSize:self.tagItemSize]) {// 在不设置tagItemSize的时候，自适应指示器宽度。会进入此分支，导致指示器先在当前位置移动到目标位置，瞬间又执行if(self.selectionIndicator.centerX != cell.centerX) 分支的方法，执行动画整体过程，从开头到结尾的过渡。
 //            
 //            // tagSize用户设置了，且不为zero时，在此改变指示器。
 //            self.selectionIndicator.x = scrollView.contentOffset.x/XBScreenWidth * self.tagItemSize.width;
